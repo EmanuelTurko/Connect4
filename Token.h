@@ -6,8 +6,9 @@
 #define CONNECT4_TOKEN_H
 
 enum class TokenState {
-    Inactive = '\t',
-    Active = 'C'
+    Inactive = ' ',
+    Red = 'R',
+    Yellow = 'Y'
 };
 
 class Token {

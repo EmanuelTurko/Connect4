@@ -5,64 +5,43 @@
 #ifndef CONNECT4_BOARD_H
 #define CONNECT4_BOARD_H
 #include "Token.h"
-#include "iostream"
 
 
 class Board
 {
 private:
-    int m_Rows{};
-    int m_Columns{};
+    static constexpr int m_MaxRows{6};
+    static constexpr int m_MaxColumns{7};
     bool m_IsGameOver{};
     Token **m_Tokens{};
+    bool m_IsInputValid{};
+    int m_TokensAdded{};
+    TokenState m_CurrentPlayerState{};
 
-    void InitBoard()
-    {
-        m_Rows = 7;
-        m_Columns = 6;
-    }
-    void InitTokens()
-    {
-        m_Tokens = new Token *[m_Columns]();
-        for (auto i = 0; i < m_Columns; ++i) { m_Tokens[i] = new Token[m_Rows](); }
-    }
 
-    void DestroyTokens()
-    {
-        for (auto i = 0; i < m_Columns; ++i) { delete[] m_Tokens[i]; }
-        delete[] m_Tokens;
-    }
+    void InitTokens();
 
-    void DisplayBoard() const
-    {
-        for (auto i = 0; i < m_Rows; ++i)
-        {
-            for (auto j = 0; j < m_Columns; ++j) { std::cout << "| " << m_Tokens[i][j].GetTokenChar() << " "; }
-            std::cout << "|\n";
-        }
-    }
+    void DestroyTokens() const;
 
-    int ConvertToColumnNumber(const int &input) { return input - 1; }
+    int ConvertToColumnNumber(int input);
 
-    int FindEmptyRow(const int &selectedColumn)
-    {
-        int emptyRowIndex{};
+    int FindEmptyRow(int selectedColumn);
 
-        for (int i = m_Rows - 1; i >= 0; --i)
-        {
-            if (m_Tokens[selectedColumn][i].GetTokenState() == TokenState::Inactive)
-            {
-                emptyRowIndex = i;
-                break;
-            }
-        }
-        return emptyRowIndex;
-    }
+    void AddTokenToColumn(int row, const int &column, bool isRedPlayer);
 
-    void AddTokenToColumn(const int &selectedColumn)
-    {
-        m_Tokens[selectedColumn][FindEmptyRow(selectedColumn)].SetTokenState(TokenState::Active);
-    }
+    bool IsColumnValid(int column);
+
+    bool IsRowFull(int row);
+
+    bool CheckTokenState(int x, int y);
+
+    bool CheckVertical(int x, int y);
+
+    bool CheckHorizontal(int x, int y);
+
+    bool CheckDiagonal(int x, int y);
+
+    void CheckWin(int row, int column, bool isRedPlayer);
 
 public:
     // Constructor and Destructor
@@ -74,17 +53,16 @@ public:
 
     virtual ~Board() { DestroyTokens(); }
 
+    void DisplayBoard() const;
 
-    void PlayGame(const int &input)
-    {
-        AddTokenToColumn(ConvertToColumnNumber(input));
-        DisplayBoard();
-    }
+    bool CheckGameOver();
 
-    bool CheckGameOver() { return m_IsGameOver; }
+    void PlayGame(const int &input, const bool &isRedPlayer);
 
-    int GetBoardLength() const { return m_Rows; }
-    int GetBoardWidth() const { return m_Columns; }
+    bool CheckInputValidity() { return m_IsInputValid; }
+
+    int GetBoardLength() const { return m_MaxRows; }
+    int GetBoardWidth() const { return m_MaxColumns; }
 };
 
 

@@ -9,23 +9,32 @@
 #define CONNECT4_GAME_H
 
 
-class Game {
+class Game
+{
 private:
     bool m_IsGameOver{};
     int m_Input{};
     Board m_Board{};
+    bool m_IsRedPlayer{};
 
     void Update()
     {
-        GetInput();
-        m_Board.PlayGame(m_Input);
-        if (m_Board.CheckGameOver()) m_IsGameOver = true;
-
+        m_Board.DisplayBoard();
+        do
+        {
+            GetInput();
+            m_Board.PlayGame(m_Input, m_IsRedPlayer);
+        } while (!m_Board.CheckInputValidity());
+        {
+            if (m_Board.CheckGameOver()) m_IsGameOver = true;
+        }
+        m_IsRedPlayer = !m_IsRedPlayer;
     }
 
     void GetInput()
     {
-        std::cout << "Input : ";
+        const std::string playerName = m_IsRedPlayer ? "Red" : "Yellow";
+        std::cout << "\n" << playerName << "Input : ";
         std::cin >> m_Input;
     }
 
@@ -34,6 +43,7 @@ public:
     Game()
     {
         m_IsGameOver = false;
+        m_IsRedPlayer = false;
     }
 
     virtual ~Game()
@@ -41,12 +51,7 @@ public:
     }
 
     // Main Game Loop Method
-    void Run()
-    {
-        while (!m_IsGameOver) {
-            Update();
-        }
-    }
+    void Run() { while (!m_IsGameOver) { Update(); } }
 };
 
 #endif //CONNECT4_GAME_H
