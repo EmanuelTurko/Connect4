@@ -5,19 +5,18 @@
 #ifndef CONNECT4_BOARD_H
 #define CONNECT4_BOARD_H
 #include "Token.h"
+#include <SFML/System/Vector2.hpp>
 
 
 class Board
 {
 private:
-    static constexpr int m_MaxRows{6};
-    static constexpr int m_MaxColumns{7};
+    static constexpr sf::Vector2i m_BoardSize{7,6};
     bool m_IsGameOver{};
     Token **m_Tokens{};
     bool m_IsInputValid{};
     int m_TokensAdded{};
     TokenState m_CurrentPlayerState{};
-
 
     void InitTokens();
 
@@ -25,23 +24,23 @@ private:
 
     int ConvertToColumnNumber(int input);
 
-    int FindEmptyRow(int selectedColumn);
+    int FindEmptyRow(int selectedCol);
 
-    void AddTokenToColumn(int row, const int &column, bool isRedPlayer);
+    void AddTokenToColumn(int row, int col, bool isRedPlayer);
 
-    bool IsColumnValid(int column);
+    bool IsColumnValid(int col);
 
     bool IsRowFull(int row);
 
-    bool CheckTokenState(int x, int y);
+    bool CheckTokenState(int col, int row);
 
-    bool CheckVertical(int x, int y);
+    bool CheckHorizontal(int col, int row);
 
-    bool CheckHorizontal(int x, int y);
+    bool CheckVertical(int col, int row);
 
-    bool CheckDiagonal(int x, int y);
+    bool CheckDiagonal(int col, int row);
 
-    void CheckWin(int row, int column, bool isRedPlayer);
+    void CheckWin(int col, int row, bool isRedPlayer);
 
 public:
     // Constructor and Destructor
@@ -60,9 +59,6 @@ public:
     void PlayGame(const int &input, const bool &isRedPlayer);
 
     bool CheckInputValidity() { return m_IsInputValid; }
-
-    int GetBoardLength() const { return m_MaxRows; }
-    int GetBoardWidth() const { return m_MaxColumns; }
 };
 
 
