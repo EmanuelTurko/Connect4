@@ -42,6 +42,7 @@ private:
 
     void CheckWin(int col, int row, bool isRedPlayer);
 
+
 public:
     // Constructor and Destructor
     Board()
@@ -59,6 +60,13 @@ public:
     void PlayGame(const int &input, const bool &isRedPlayer);
 
     bool CheckInputValidity() { return m_IsInputValid; }
+
+    [[nodiscard]] sf::Vector2i GetBoardSize() const { return m_BoardSize; }
+    [[nodiscard]] TokenState GetTokenStateAt (const sf::Vector2i position) const
+    {
+        return m_Tokens[position.y][position.x].GetTokenState();
+    }
+
 };
 
 

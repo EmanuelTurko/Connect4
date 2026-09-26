@@ -17,6 +17,7 @@ add_executable(Connect4 main.cpp
         Board.h
         Game.h
         Token.h
-        Board.cpp)
+        Board.cpp
+        Renderer.h)
 target_compile_features(Connect4 PRIVATE cxx_std_17)
 target_link_libraries(Connect4 PRIVATE SFML::Graphics SFML::Window SFML::System)
