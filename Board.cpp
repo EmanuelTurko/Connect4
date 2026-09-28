@@ -1,172 +1,137 @@
-//
-// Created by Berse on 9/20/2026.
-//
-
 #include "Board.h"
-#include "iostream"
 
-void Board::InitTokens()
+
+void Board::PlayGame(const int col, const bool isRedPlayer)
 {
-    m_Tokens = new Token *[m_BoardSize.y]();
-    for (auto i = 0; i < m_BoardSize.y; ++i) { m_Tokens[i] = new Token[m_BoardSize.x](); }
-}
+    m_IsInputValid = false;
+    if (m_IsGameOver || !IsColumnValid(col)) return;
 
-void Board::DestroyTokens() const
-{
-    for (auto i = 0; i < m_BoardSize.y; ++i) { delete[] m_Tokens[i]; }
-    delete[] m_Tokens;
-}
+    const int row = FindEmptyRow(col);
+    if (IsColumnFull(row)) return;
 
-void Board::DisplayBoard() const
-{
-    for (auto i = 0; i < m_BoardSize.y; ++i)
-    {
-        for (auto j = 0; j < m_BoardSize.x; ++j) { std::cout << "| " << m_Tokens[i][j].GetTokenChar() << " "; }
-        std::cout << "|\n";
-    }
-}
+    AddTokenToColumn(row, col, isRedPlayer);
+    m_IsInputValid = true;
 
-int Board::ConvertToColumnNumber(const int input) { return input - 1; }
-
-int Board::FindEmptyRow(const int selectedCol)
-{
-    for (int i = m_BoardSize.y - 1; i >= 0; --i)
-    {
-        if (m_Tokens[i][selectedCol].GetTokenState() == TokenState::Inactive) { return i; }
-    }
-    return -1;
+    CheckWin(col, row);
+    if (!m_IsGameOver) CheckDraw();
 }
 
 void Board::AddTokenToColumn(const int row, const int col, const bool isRedPlayer)
 {
-    m_TokensAdded++;
-    m_Tokens[row][col].SetTokenState(isRedPlayer ? TokenState::Red : TokenState::Yellow);
+    m_CurrentPlayerState = isRedPlayer ? TokenState::Red : TokenState::Yellow;
+    m_Tokens[row][col].SetTokenState(m_CurrentPlayerState);
+    ++m_TokensAdded;
 }
 
-bool Board::IsColumnValid(const int col)
+bool Board::IsColumnValid(const int col) const
 {
-    m_IsInputValid = col >= 0 && col < m_BoardSize.x;
-    return m_IsInputValid;
+    return col >= 0 && col < m_BoardSize.x;
 }
 
-bool Board::IsRowFull(const int row) { return row == -1; }
-
-bool Board::CheckTokenState(const int col, const int row)
+int Board::FindEmptyRow(const int col) const
 {
-    if (col >= m_BoardSize.x ||
-        row >= m_BoardSize.y ||
-        col < 0 ||
-        row < 0) { return false; }
+    if (!IsColumnValid(col)) return -1;
+
+    for (int row = m_BoardSize.y - 1; row >= 0; --row)
+    {
+        if (m_Tokens[row][col].GetTokenState() == TokenState::Inactive) return row;
+    }
+    return -1;
+}
+
+void Board::Reset()
+{
+    for (auto &row : m_Tokens)
+        for (auto &token : row)
+            token.SetTokenState(TokenState::Inactive);
+
+    m_IsGameOver = false;
+    m_IsInputValid = false;
+    m_TokensAdded = 0;
+    m_CurrentPlayerState = TokenState::Inactive;
+    m_Winner = TokenState::Inactive;
+}
+
+
+bool Board::CheckTokenState(const int col, const int row) const
+{
+    if (col < 0 || col >= m_BoardSize.x || row < 0 || row >= m_BoardSize.y) return false;
     return m_Tokens[row][col].GetTokenState() == m_CurrentPlayerState;
 }
 
-bool Board::CheckHorizontal(const int col, const int row)
+bool Board::CheckHorizontal(const int col, const int row) const
 {
     int count{1};
-    for (auto i = 1; i < 4; ++i)
+    bool right{true};
+    bool left{true};
+    for (int i = 1; i < 4; ++i)
     {
-        if (CheckTokenState(col, row +i)) count++;
+        if (right && CheckTokenState(col + i, row)) ++count;
+        else right = false;
+
+        if (left && CheckTokenState(col - i, row)) ++count;
+        else left = false;
+
+        if (!right && !left) break;
+    }
+    return count >= 4;
+}
+
+bool Board::CheckVertical(const int col, const int row) const
+{
+    int count{1};
+    for (int i = 1; i < 4; ++i)
+    {
+        if (CheckTokenState(col, row + i)) ++count;
         else break;
     }
     return count >= 4;
 }
 
-bool Board::CheckVertical(const int col, const int row)
+bool Board::CheckDiagonal(const int col, const int row) const
 {
+    // "\" diagonal: down-right and up-left
     int count{1};
-    bool right{true};bool left{true};
-    for (auto i = 1; i < 4; ++i)
+    bool forward{true};
+    bool backward{true};
+    for (int i = 1; i < 4; ++i)
     {
-        if (CheckTokenState(col +i, row) && right) count++;
-        else right = false;
+        if (forward && CheckTokenState(col + i, row + i)) ++count;
+        else forward = false;
 
-        if (CheckTokenState(col -i, row) && left) count++;
-        else left = false;
+        if (backward && CheckTokenState(col - i, row - i)) ++count;
+        else backward = false;
 
-        if (!right && !left) break;
+        if (!forward && !backward) break;
     }
-    return count >= 4;
-}
-
-bool Board::CheckDiagonal(int col, int row)
-{
-    int count{1};
-    bool right{true};
-    bool left{true};
-
-    //Left Horizontal
-    for (auto i = 1; i < 4; ++i)
-    {
-        if (CheckTokenState(col + i, row + i) && right) count++;
-        else right = false;
-
-        if (CheckTokenState(col - i, row - i) && left) count++;
-        else left = false;
-
-        if (!right && !left) break;
-    }
-
     if (count >= 4) return true;
 
+    // "/" diagonal: up-right and down-left
     count = 1;
-    right = left = true;
-
-    //Right Horizontal
-    for (auto i = 1; i < 4; ++i)
+    forward = backward = true;
+    for (int i = 1; i < 4; ++i)
     {
-        if (CheckTokenState(col + i, row - i) && right) count++;
-        else right = false;
+        if (forward && CheckTokenState(col + i, row - i)) ++count;
+        else forward = false;
 
-        if (CheckTokenState(col - i, row + i) && left) count++;
-        else left = false;
+        if (backward && CheckTokenState(col - i, row + i)) ++count;
+        else backward = false;
 
-        if (!right && !left) break;
+        if (!forward && !backward) break;
     }
-
     return count >= 4;
 }
 
-void Board::CheckWin(const int col, const int row, const bool isRedPlayer)
+void Board::CheckWin(const int col, const int row)
 {
-    if (CheckHorizontal(col, row) ||
-        CheckVertical(col, row) ||
-        CheckDiagonal(col, row))
+    if (CheckHorizontal(col, row) || CheckVertical(col, row) || CheckDiagonal(col, row))
     {
-        DisplayBoard();
-        const std::string playerName = isRedPlayer ? "Red" : "Yellow";
-        std::cout << "\nPlayer " << playerName << " Wins\n\n";
+        m_Winner = m_CurrentPlayerState;
         m_IsGameOver = true;
     }
 }
 
-void Board::PlayGame(const int &input, const bool &isRedPlayer)
+void Board::CheckDraw()
 {
-    const int col = ConvertToColumnNumber(input);
-    if (!IsColumnValid(col))
-    {
-        std::cout << "\n Wrong Input... Try Again";
-        return;
-    }
-
-    const int row = FindEmptyRow(col);
-    if (IsRowFull(row))
-    {
-        m_IsInputValid = false;
-        std::cout << "\nColumn Full.. Try another column!";
-        return;
-    }
-    AddTokenToColumn(row, ConvertToColumnNumber(input), isRedPlayer);
-    m_CurrentPlayerState = isRedPlayer ? TokenState::Red : TokenState::Yellow;
-
-    CheckWin(col, row, isRedPlayer);
-}
-
-bool Board::CheckGameOver()
-{
-    if (m_TokensAdded == m_BoardSize.x * m_BoardSize.y  && !m_IsGameOver)
-    {
-        std::cout << "\n Its a Draw!";
-        m_IsGameOver = true;
-    }
-    return m_IsGameOver;
+    if (m_TokensAdded == m_BoardSize.x * m_BoardSize.y) m_IsGameOver = true;
 }

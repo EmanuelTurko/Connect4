@@ -1,69 +1,37 @@
-//
-// Created by Berse on 9/20/2026.
-//
-#pragma once
-#include "Board.h"
-#include "iostream"
-#include "Renderer.h"
-
 #ifndef CONNECT4_GAME_H
 #define CONNECT4_GAME_H
 
+#include <optional>
+#include "Board.h"
+#include "Renderer.h"
 
 class Game
 {
 private:
-    bool m_IsGameOver{};
-    int m_Input{};
     Board m_Board{};
-    bool m_IsRedPlayer{};
-    Renderer m_Renderer;
+    Renderer m_Renderer{};
+    bool m_IsRedPlayer{true}; // red always starts
 
     void Update()
     {
-        m_Renderer.Render(m_Board);
+        m_Renderer.Render(m_Board, m_IsRedPlayer);
 
-
-        //m_Board.DisplayBoard();
-      /*  do
+        if (m_Renderer.IsReplayClicked())
         {
-            GetInput();
-            m_Board.PlayGame(m_Input, m_IsRedPlayer);
-        } while (!m_Board.CheckInputValidity());
-        {
-            if (m_Board.CheckGameOver()) m_IsGameOver = true;
+            m_Board.Reset();
+            m_IsRedPlayer = true;
+            return; // don't also count this click as a move
         }
-        m_IsRedPlayer = !m_IsRedPlayer;*/
-    }
 
-    void GetInput()
-    {
-        const std::string playerName = m_IsRedPlayer ? "Red" : "Yellow";
-        std::cout << "\n" << playerName << "Input : ";
-        std::cin >> m_Input;
+        if (const std::optional<int> col = m_Renderer.GetClickedColumn())
+        {
+            m_Board.PlayGame(*col, m_IsRedPlayer);
+            if (m_Board.CheckInputValidity()) { m_IsRedPlayer = !m_IsRedPlayer; }
+        }
     }
 
 public:
-    // Constructor and Destructor
-    Game()
-    {
-        m_IsGameOver = false;
-        m_IsRedPlayer = false;
-    }
-
-    virtual ~Game()
-    {
-    }
-
-    // Main Game Loop Method
-    void Run()
-    {
-        while (m_Renderer.IsWindowOpen())
-        {
-            Update();
-        }
-       // while (!m_IsGameOver) { Update(); }
-    }
+    void Run() { while (m_Renderer.IsWindowOpen()) { Update(); } }
 };
 
 #endif //CONNECT4_GAME_H

@@ -19,8 +19,7 @@ public:
     Token() { m_State = TokenState::Inactive; }
 
     virtual ~Token()
-    {
-    }
+    = default;
 
     void SetTokenState(const TokenState newState) { m_State = newState; }
     [[nodiscard]] TokenState GetTokenState() const { return m_State; }

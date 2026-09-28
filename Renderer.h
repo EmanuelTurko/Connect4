@@ -4,70 +4,48 @@
 
 #ifndef CONNECT4_RENDERER_H
 #define CONNECT4_RENDERER_H
-#include "SFML/Graphics/RenderWindow.hpp"
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <optional>
+#include <string>
+#include "Board.h"
 
 
 class Renderer
 {
 private:
-    sf::RenderWindow m_Window{};
     static constexpr float m_CellSize{100.f};
     static constexpr float m_Padding{15.f};
+    static constexpr sf::Vector2u m_WindowSize{700, 600};
+    static constexpr sf::Vector2f m_ReplayButtonPosition{350.f, 300.f};
+    static constexpr sf::Vector2f m_ReplayButtonSize{200.f, 60.f};
+    static constexpr auto m_FontPath{"assets/font/Roboto-Med.ttf"};
+
+    sf::RenderWindow m_Window{};
+    std::optional<int> m_ClickedCol{};
+    sf::Font m_Font{};
+    sf::RectangleShape m_ReplayButton{m_ReplayButtonSize};
+
+    bool m_ReplayClicked{false};
+
+    void InitWindow();
+
+    void InitFont();
+
+    void InitReplayButton();
+
 public:
+    Renderer();
 
+    virtual ~Renderer() = default;
 
-    Renderer(){ InitWindow();}
-    virtual ~Renderer(){}
+    sf::Color GetColorForState(TokenState state) const;
 
-    void InitWindow()
-    {
-        m_Window.create(sf::VideoMode({700,600}),"Connect Four");
-    }
+    void Render(const Board &board, bool isRedPlayer);
 
-    void Render(const Board& board)
-    {
-        m_Window.clear(sf::Color::Blue);
-        for (auto row = 0; row < board.GetBoardSize().y;++row)
-        {
-            for (auto col = 0; col < board.GetBoardSize().x;++col)
-            {
-                sf::CircleShape circle(m_CellSize / 2.f - m_Padding);
-                circle.setFillColor(sf::Color::White);
-                circle.setPosition({m_CellSize * static_cast<float>(col) + m_Padding, m_CellSize * static_cast<float>(row) + m_Padding});
-                m_Window.draw(circle);
-            }
-        }
-        m_Window.display();
+    bool IsWindowOpen() const { return m_Window.isOpen(); }
 
-        while (const std::optional<sf::Event>& e = m_Window.pollEvent())
-        {
-            if (e->is<sf::Event::Closed>())
-            {
-                m_Window.close();
-            }
-            else if (const auto* click = e->getIf<sf::Event::MouseButtonPressed>())
-            {
-                if (click->button == sf::Mouse::Button::Left)
-                {
-                    const sf::Vector2i pixel = click->position;
-                    const int col = pixel.x / static_cast<int>(m_CellSize);
-                    const int row = pixel.y / static_cast<int>(m_CellSize);
-
-                    std::cout << "pixel (" << pixel.x << ", " << pixel.y << ")"
-            << "  ->  col " << col << ", row " << row << '\n';
-                }
-            }
-        }
-
-
-
-    }
-
-    bool IsWindowOpen() const
-    {
-        return m_Window.isOpen();
-    }
-
-
+    std::optional<int> GetClickedColumn() const { return m_ClickedCol; }
+    [[nodiscard]] bool IsReplayClicked() const { return m_ReplayClicked; }
 };
 #endif //CONNECT4_RENDERER_H
